@@ -1,0 +1,28 @@
+{
+  "name": "enriched-hn",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev -c packages/api/wrangler.jsonc -c packages/cron/wrangler.jsonc",
+    "dev:api": "wrangler dev -c packages/api/wrangler.jsonc --persist-to .wrangler/state",
+    "dev:cron": "wrangler dev -c packages/cron/wrangler.jsonc --persist-to .wrangler/state --test-scheduled",
+    "dev:extension": "pnpm --filter extension dev",
+    "dev:web": "pnpm --filter web dev",
+    "trigger:cron": "curl -s http://localhost:8791/__scheduled | head -c 500",
+    "deploy": "pnpm deploy:cron && pnpm deploy:api",
+    "deploy:api": "wrangler deploy -c packages/api/wrangler.jsonc",
+    "deploy:cron": "wrangler deploy -c packages/cron/wrangler.jsonc",
+    "build:extension": "pnpm --filter extension build",
+    "build:web": "pnpm --filter web build",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.19",
+    "@cloudflare/workers-types": "^4.20251230.0",
+    "typescript": "^5.7.2",
+    "vitest": "~3.2.0",
+    "wrangler": "^4.54.0"
+  }
+}

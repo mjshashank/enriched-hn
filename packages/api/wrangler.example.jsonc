@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "enriched-hn-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-12-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  // Create KV namespace: npx wrangler kv:namespace create HN_ENRICHED_DATA
+  // Then replace YOUR_KV_NAMESPACE_ID with the ID from the output
+  "kv_namespaces": [
+    { "binding": "HN_ENRICHED_DATA", "id": "YOUR_KV_NAMESPACE_ID" }
+  ]
+}
