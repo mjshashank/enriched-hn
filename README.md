@@ -113,9 +113,13 @@ Or load it unpacked for development:
 
 ### 4. GitHub Actions (CI/CD)
 
-A workflow is included at `.github/workflows/build-extension.yml` that:
-- Builds on every push to main
-- Creates releases when you push a tag (e.g., `git tag v1.0.0 && git push --tags`)
+A workflow is included at `.github/workflows/build-extension.yml` for releasing new versions:
+
+1. Go to **Actions** → **Build Extension** → **Run workflow**
+2. Optionally enter a version (e.g., `1.2.0`) or leave empty to auto-increment patch
+3. Click **Run workflow**
+
+The workflow will build the extension, bump the version in `manifest.json` and `package.json`, commit, tag, and create a GitHub Release with the extension ZIP.
 
 **Setup:** Add your API endpoint as a repository secret named `API_ENDPOINT`.
 
