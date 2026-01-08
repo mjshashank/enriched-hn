@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import browser from 'webextension-polyfill';
 import { ExtensionSettings, DEFAULT_SETTINGS, STORAGE_KEY } from '../../types';
 
@@ -6,6 +6,8 @@ export function useSettings() {
 	const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const pendingSettingsRef = useRef<ExtensionSettings | null>(null);
 
 	useEffect(() => {
 		const loadSettings = async () => {
@@ -35,15 +37,36 @@ export function useSettings() {
 		};
 
 		browser.storage.onChanged.addListener(listener);
-		return () => browser.storage.onChanged.removeListener(listener);
+		return () => {
+			browser.storage.onChanged.removeListener(listener);
+			// Save any pending settings on unmount
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+				if (pendingSettingsRef.current) {
+					browser.storage.sync.set({ [STORAGE_KEY]: pendingSettingsRef.current }).catch(() => {});
+				}
+			}
+		};
 	}, []);
 
 	const updateSettings = useCallback((partial: Partial<ExtensionSettings>) => {
 		setSettings((prev) => {
 			const newSettings = { ...prev, ...partial };
-			browser.storage.sync.set({ [STORAGE_KEY]: newSettings }).catch((e) => {
-				setError(e instanceof Error ? e.message : 'Failed to save settings');
-			});
+			pendingSettingsRef.current = newSettings;
+
+			// Debounce storage writes to avoid exceeding Chrome's quota
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+			}
+			saveTimeoutRef.current = setTimeout(() => {
+				if (pendingSettingsRef.current) {
+					browser.storage.sync.set({ [STORAGE_KEY]: pendingSettingsRef.current }).catch((e) => {
+						setError(e instanceof Error ? e.message : 'Failed to save settings');
+					});
+					pendingSettingsRef.current = null;
+				}
+			}, 300);
+
 			return newSettings;
 		});
 	}, []);
