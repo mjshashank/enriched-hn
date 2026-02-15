@@ -1,5 +1,5 @@
 import { generateObject } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import type { StoryWithComments, EnrichedStory, HNComment } from '@enriched-hn/shared';
 import { batchEnrichmentSchema } from '@enriched-hn/shared';
 
@@ -70,22 +70,17 @@ ${storyContexts}`;
  * Used by queue consumer for per-story processing
  */
 export async function enrichSingleStory(storyData: StoryWithComments, apiKey: string): Promise<EnrichedStory> {
-	const google = createGoogleGenerativeAI({ apiKey });
+	const openai = createOpenAI({
+		apiKey,
+		baseURL: 'https://openrouter.ai/api/v1',
+	});
 
 	const prompt = buildPrompt([storyData]);
 
 	const { object } = await generateObject({
-		model: google('gemini-3-flash-preview'),
+		model: openai('openai/gpt-oss-120b:free'),
 		schema: batchEnrichmentSchema,
 		prompt,
-		providerOptions: {
-			google: {
-				thinkingConfig: {
-					thinkingLevel: 'low',
-					includeThoughts: false,
-				},
-			},
-		},
 	});
 
 	const result = object.stories[0];
