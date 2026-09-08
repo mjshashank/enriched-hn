@@ -66,6 +66,48 @@ ${storyContexts}`;
 }
 
 /**
+ * One OpenRouter call, with failover handled inside it rather than here.
+ * Tried in order; three is the maximum OpenRouter accepts.
+ *
+ * Gemini first, served through BYOK against the account's own free quota, which
+ * allows 20 requests a day. When that is spent the two free models take over,
+ * and neither ever bills.
+ */
+const MODEL_LADDER = [
+	'google/gemini-3.8-flash',
+	'nvidia/nemotron-3-ultra-550b-a55b:free',
+	'nvidia/nemotron-3-super-120b-a12b:free',
+] as const;
+
+/**
+ * Google sells Gemini through two OpenRouter providers. The BYOK key covers
+ * `google-ai-studio` and costs nothing; `google-vertex` is a separate paid
+ * endpoint that OpenRouter silently crosses to once the free quota is spent.
+ * Excluding Vertex means an exhausted quota falls to the free models instead of
+ * quietly running up a bill. Pinning with `only` cannot be used here: it would
+ * make the non-Google models unroutable and break the failover.
+ */
+const IGNORED_PROVIDERS = ['google-vertex'];
+
+/**
+ * `models` and `provider` are OpenRouter extensions the AI SDK has no settings
+ * for, so inject them into the request body on the way out.
+ */
+const fetchWithFailover: typeof fetch = (input, init) => {
+	if (typeof init?.body === 'string') {
+		try {
+			const body = JSON.parse(init.body);
+			body.models = [...MODEL_LADDER];
+			body.provider = { ignore: [...IGNORED_PROVIDERS] };
+			init = { ...init, body: JSON.stringify(body) };
+		} catch {
+			// Leave the body alone if it is not the JSON we expect.
+		}
+	}
+	return fetch(input, init);
+};
+
+/**
  * Enrich a single story with LLM-generated classification
  * Used by queue consumer for per-story processing
  */
@@ -73,12 +115,13 @@ export async function enrichSingleStory(storyData: StoryWithComments, apiKey: st
 	const openai = createOpenAI({
 		apiKey,
 		baseURL: 'https://openrouter.ai/api/v1',
+		fetch: fetchWithFailover,
 	});
 
 	const prompt = buildPrompt([storyData]);
 
 	const { object } = await generateObject({
-		model: openai('openai/gpt-oss-120b:free'),
+		model: openai(MODEL_LADDER[0], { structuredOutputs: true }),
 		schema: batchEnrichmentSchema,
 		prompt,
 	});

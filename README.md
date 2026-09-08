@@ -23,7 +23,7 @@ A browser extension that enhances Hacker News with AI-powered metadata. See topi
 │ Cloudflare Worker (Cron)    │
 │ - Scheduled: Fetch top HN   │
 │ - Queue: Enrich stories     │
-│ - AI: Google Gemini         │
+│ - AI: OpenRouter            │
 └────────┬────────────────────┘
          │
          v
@@ -55,7 +55,7 @@ This project requires you to deploy your own backend infrastructure.
 - Node.js 18+
 - pnpm
 - Cloudflare account
-- Google AI API key (for Gemini)
+- OpenRouter API key
 
 ### 1. Clone and Install
 
@@ -83,8 +83,8 @@ Copy the `id` from the output and update both `wrangler.jsonc` files, replacing 
 #### Set Secrets
 
 ```bash
-# Set your Google AI API key
-npx wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY -c packages/cron/wrangler.jsonc
+# Set your OpenRouter API key
+npx wrangler secret put OPENROUTER_API_KEY -c packages/cron/wrangler.jsonc
 ```
 
 #### Deploy Workers

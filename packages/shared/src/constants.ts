@@ -16,11 +16,18 @@ export const MAX_CHILDREN_PER_COMMENT = 3;
 /** Max depth for recursive comment fetching (1 = top-level only) */
 export const MAX_COMMENT_DEPTH = 3;
 
-/** Max stories to enqueue per cron run */
+/**
+ * Max stories to enqueue per cron run. Hourly, so up to 480 a day. Gemini's
+ * free tier covers the first 20; the rest land on OpenRouter's free models.
+ */
 export const MAX_STORIES_TO_ENQUEUE = 20;
 
-/** Delay between enqueued messages in seconds (for LLM rate limiting) */
-export const QUEUE_DELIVERY_DELAY_SECONDS = 15;
+/**
+ * Delay between enqueued messages in seconds. Gemini's free tier allows 5
+ * requests per minute on the Flash models, so 20s holds us at 3 RPM with room
+ * for a retry to slot in without tripping the limit.
+ */
+export const QUEUE_DELIVERY_DELAY_SECONDS = 20;
 
 /** Max concurrent fetch requests for basic story data */
 export const FETCH_CONCURRENCY_STORIES = 10;

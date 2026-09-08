@@ -25,10 +25,11 @@
         "max_batch_size": 1,
         "max_batch_timeout": 0,
         "max_retries": 3,
-        "max_concurrency": 1
+        "max_concurrency": 1,
+        "dead_letter_queue": "hn-enrichment-dlq"
       }
     ]
   }
-  // Secret: GOOGLE_GENERATIVE_AI_API_KEY
-  // Set via: npx wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+  // Secret: OPENROUTER_API_KEY
+  // Set via: npx wrangler secret put OPENROUTER_API_KEY
 }

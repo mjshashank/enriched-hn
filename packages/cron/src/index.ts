@@ -47,7 +47,7 @@ export default {
         reason: s.reason,
         enqueuedAt: now,
       } as EnrichmentQueueMessage,
-      // Stagger delivery to help with LLM rate limiting (10 RPM)
+      // Stagger delivery to stay under the provider's requests-per-minute cap
       delaySeconds: index * QUEUE_DELIVERY_DELAY_SECONDS,
     }));
 
@@ -75,9 +75,9 @@ export default {
         }
 
         // 2. Check API key
-        const apiKey = env.GOOGLE_GENERATIVE_AI_API_KEY;
+        const apiKey = env.OPENROUTER_API_KEY;
         if (!apiKey) {
-          throw new Error('GOOGLE_GENERATIVE_AI_API_KEY not configured');
+          throw new Error('OPENROUTER_API_KEY not configured');
         }
 
         // 3. Enrich with LLM
@@ -88,6 +88,13 @@ export default {
 
         message.ack();
       } catch (error) {
+        // Log before retrying. retry() reports success to the runtime, so an
+        // unlogged failure here is invisible: the queue drains, the worker looks
+        // healthy, and nothing is ever written.
+        console.error(
+          `Enrichment failed for story ${storyId} (attempt ${message.attempts}):`,
+          error instanceof Error ? error.stack || error.message : String(error)
+        );
         // Check if it's a rate limit error (429)
         const isRateLimit = error instanceof Error && error.message.includes('429');
         // Retry with longer delay for rate limits (60s), shorter for other errors (30s)

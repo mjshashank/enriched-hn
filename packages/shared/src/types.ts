@@ -147,7 +147,7 @@ export interface EnrichmentQueueMessage {
  */
 export interface Env {
   HN_ENRICHED_DATA: KVNamespace;
-  GOOGLE_GENERATIVE_AI_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
   /** Queue for story enrichment jobs */
   ENRICHMENT_QUEUE?: Queue<EnrichmentQueueMessage>;
 }
